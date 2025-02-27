@@ -1,55 +1,70 @@
-import network
-from umqtt.simple import MQTTClient
 from machine import Pin, ADC
 from time import sleep
+from umqtt.simple import MQTTClient
+import network
 
-# Configuración de WiFi
-WIFI_SSID = "INFINITUM0F58"          # Nombre de tu red WiFi
-WIFI_PASSWORD = "xDtf3kf5zs"  # Contraseña de tu red WiFi
+# Configuración del sensor y el LED
+sensor = ADC(Pin(34))  # Se configura el sensor en el pin GPIO34
+led = Pin(2, Pin.OUT)  # Se configura el LED en el pin GPIO2 como salida
 
-# Configuración de MQTT
-MQTT_BROKER = "broker.emqx.io"  # Broker MQTT público
-MQTT_PORT = 1883                # Puerto del broker MQTT
-MQTT_TOPIC = "sensor/ldr"       # Tópico MQTT para publicar los datos
-MQTT_CLIENT_ID = "esp32_ldr"    # ID único del cliente MQTT
+# Ajuste del sensor (configuración de la precisión y rango de lectura)
+sensor.atten(ADC.ATTN_11DB)  # Se ajusta el rango de lectura del ADC a 0-3.6V
+sensor.width(ADC.WIDTH_12BIT)  # Se configura la precisión del ADC a 12 bits (0-4095)
 
-# Configuración del LDR
-ldr = ADC(Pin(34))  # Pin del LDR (conectado a un pin analógico)
+# Configuración del servidor MQTT
+MQTT_Broker = "broker.emqx.io"  # Dirección del servidor MQTT
+MQTT_USER = ""  # Usuario para el MQTT (vacío en este caso)
+MQTT_PASSWORD = ""  # Contraseña para el MQTT (vacía en este caso)
+MQTT_CLIENT_ID = ""  # ID único del cliente MQTT (vacío en este caso)
+MQTT_TOPIC = "vmmh/sensor/ldr"  # Tema donde se publicarán los datos del sensor
+MQTT_PORT = 1883  # Puerto del servidor MQTT (1883 es el estándar para MQTT sin cifrado)
 
-# Función para conectar a WiFi
-def conectar_wifi():
-    print("Conectando a WiFi...", end="")
-    sta_if = network.WLAN(network.STA_IF)
-    sta_if.active(True)
-    sta_if.connect(WIFI_SSID, WIFI_PASSWORD)
-    while not sta_if.isconnected():
+# Función para conectar al WiFi
+def wifi_connect():
+    print("Conectando", end="")
+    sta_if = network.WLAN(network.STA_IF)  # Modo cliente WiFi
+    sta_if.active(True)  # Activa el módulo WiFi
+    try:
+        sta_if.connect("INFINITUM0F58", "xDtf3kf5zs")  # Conexión a la red WiFi con SSID y contraseña
+    except Exception as e:
+        print("Error al conectar:", e)  # Si ocurre un error en la conexión
+        return
+    timeout = 10  # Establece el tiempo máximo de espera para conectar
+    while not sta_if.isconnected() and timeout:  # Intenta conectar durante el tiempo límite
         print(".", end="")
-        sleep(0.3)
-    print(" WiFi Conectada!")
-    print("IP:", sta_if.ifconfig()[0])
+        sleep(1)
+        timeout -= 1
+    if sta_if.isconnected():
+        print(" WiFi conectada")  # Si se conecta exitosamente
+    else:
+        print(" Falló la conexión WiFi")  # Si no se conecta dentro del tiempo límite
 
-# Función para conectar al broker MQTT
-def conectar_mqtt():
-    client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, port=MQTT_PORT)
-    client.connect()
-    print("Conectado al broker MQTT")
-    return client
+# Función que maneja los mensajes MQTT recibidos
+def llegada_mensaje(topic, msg):
+    print(msg)  # Muestra el mensaje recibido
+    if msg == b'1':  # Si el mensaje recibido es '1'
+        led.value(1)  # Enciende el LED
+    if msg == b'0':  # Si el mensaje recibido es '0'
+        led.value(0)  # Apaga el LED
 
-# Conectar a WiFi
-conectar_wifi()
+# Función para suscribirse al tema MQTT
+def subscribir():
+    client = MQTTClient(MQTT_CLIENT_ID, MQTT_Broker, port=MQTT_PORT, user=MQTT_USER, password=MQTT_PASSWORD, keepalive=0)  # Crea el cliente MQTT
+    client.set_callback(llegada_mensaje)  # Asigna la función de manejo de mensajes
+    client.connect()  # Se conecta al servidor MQTT
+    client.subscribe(MQTT_TOPIC)  # Se suscribe al tema definido
+    print("Conectado a %s, al tema %s" % (MQTT_Broker, MQTT_TOPIC))  # Confirma la conexión y suscripción
+    return client  # Devuelve el cliente MQTT para su uso posterior
 
-# Conectar al broker MQTT
-client = conectar_mqtt()
+wifi_connect()  # Conecta el dispositivo al WiFi
+client = subscribir()  # Se conecta al servidor MQTT y se suscribe al tema
 
-# Ciclo principal
-while True:
-    # Leer el valor del LDR
-    ldr_value = ldr.read()
-    print("Luminosidad:", ldr_value)
-
-    # Publicar el valor en el tópico MQTT
-    client.publish(MQTT_TOPIC, str(ldr_value))
-
-    # Esperar 5 segundos antes de la siguiente lectura
-    sleep(5)
-
+valor_anterior = sensor.read()  # Lee el valor inicial del sensor
+while True:  # Bucle principal que se ejecuta indefinidamente
+    client.check_msg()  # Revisa si hay mensajes nuevos sin bloquear el código
+    nuevo_dato = sensor.read()  # Lee el valor actual del sensor
+    if valor_anterior != nuevo_dato:  # Si el valor del sensor ha cambiado
+        led.value(1)  # Enciende el LED para indicar un cambio
+        client.publish(MQTT_TOPIC, str(nuevo_dato))  # Publica el nuevo valor del sensor en el tema MQTT
+        valor_anterior = nuevo_dato  # Actualiza el valor anterior con el nuevo dato
+    sleep(1)  # Espera 1 segundo antes de realizar otra lectura del sensor
