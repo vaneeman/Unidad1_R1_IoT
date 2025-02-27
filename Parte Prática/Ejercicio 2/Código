@@ -1,1 +1,33 @@
+from hcsr04 import HCSR04  # Importa la librería que maneja el sensor ultrasónico HC-SR04
+from time import sleep  # Importa la función sleep para hacer pausas en el código
+from machine import Pin  # Importa la clase Pin para controlar los pines GPIO
+
+# Configuración del sensor ultrasónico HC-SR04
+sensor = HCSR04(trigger_pin=5, echo_pin=18, echo_timeout_us=24000)  # Se configura el sensor con el pin de disparo (trigger) en el GPIO5 y el pin de eco (echo) en el GPIO18. Se establece el tiempo de espera para el eco en 24000 microsegundos.
+
+# Configuración de los LED (rojo, amarillo y verde) en los pines GPIO
+ledRojo = Pin(19, Pin.OUT)  # LED rojo en el GPIO19 como salida
+ledAmarillo = Pin(4, Pin.OUT)  # LED amarillo en el GPIO4 como salida
+ledVerde = Pin(15, Pin.OUT)  # LED verde en el GPIO15 como salida
+
+# Bucle principal para medir la distancia y controlar los LED
+while True:  
+    distancia = sensor.distance_cm()  # Lee la distancia medida por el sensor en centímetros
+    print(distancia)  # Muestra la distancia en la consola
+
+    # Condicionales para encender los LED dependiendo de la distancia medida
+    if distancia > 50:  # Si la distancia es mayor a 50 cm
+        ledRojo.value(0)  # Apaga el LED rojo
+        ledAmarillo.value(0)  # Apaga el LED amarillo
+        ledVerde.value(1)  # Enciende el LED verde
+    elif distancia >= 30:  # Si la distancia está entre 30 cm y 50 cm
+        ledRojo.value(0)  # Apaga el LED rojo
+        ledAmarillo.value(1)  # Enciende el LED amarillo
+        ledVerde.value(0)  # Apaga el LED verde
+    else:  # Si la distancia es menor a 30 cm
+        ledRojo.value(1)  # Enciende el LED rojo
+        ledAmarillo.value(0)  # Apaga el LED amarillo
+        ledVerde.value(0)  # Apaga el LED verde
+
+    sleep(1)  # Espera 1 segundo antes de tomar otra medición
 
