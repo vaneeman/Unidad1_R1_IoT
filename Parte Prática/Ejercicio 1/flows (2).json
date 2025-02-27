@@ -1,0 +1,202 @@
+[
+    {
+        "id": "24be9e8177fdbe4b",
+        "type": "tab",
+        "label": "sensor LDR R1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "582df994ba46a154",
+        "type": "mqtt in",
+        "z": "24be9e8177fdbe4b",
+        "name": "",
+        "topic": "vmmh/sensor/ldr",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "070735782dd4d6fa",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 140,
+        "wires": [
+            [
+                "87c0e9cefd4700a4"
+            ]
+        ]
+    },
+    {
+        "id": "87c0e9cefd4700a4",
+        "type": "function",
+        "z": "24be9e8177fdbe4b",
+        "name": "regristrarLuminosidad",
+        "func": "var dato = msg.payload;\nmsg.topic= \"INSERT INTO sensores_details(sensor_id, users_id, value) VALUES(2,5,'\"+dato+\"');\";\n\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 240,
+        "wires": [
+            [
+                "8ded2269f73bcd1c"
+            ]
+        ]
+    },
+    {
+        "id": "8ded2269f73bcd1c",
+        "type": "sqlite",
+        "z": "24be9e8177fdbe4b",
+        "mydb": "c472cba5b97934b6",
+        "sqlquery": "msg.topic",
+        "sql": "",
+        "name": "BaseDatos",
+        "x": 570,
+        "y": 140,
+        "wires": [
+            [
+                "406bbcd74d9704c6"
+            ]
+        ]
+    },
+    {
+        "id": "406bbcd74d9704c6",
+        "type": "debug",
+        "z": "24be9e8177fdbe4b",
+        "name": "debug 7",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "a32138472b369f69",
+        "type": "inject",
+        "z": "24be9e8177fdbe4b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 230,
+        "y": 320,
+        "wires": [
+            [
+                "85db4ccab213d329"
+            ]
+        ]
+    },
+    {
+        "id": "b67d57277ca36ea5",
+        "type": "ui_table",
+        "z": "24be9e8177fdbe4b",
+        "group": "c51626b0005ee69e",
+        "name": "",
+        "order": 1,
+        "width": 17,
+        "height": 11,
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 610,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "85db4ccab213d329",
+        "type": "sqlite",
+        "z": "24be9e8177fdbe4b",
+        "mydb": "c472cba5b97934b6",
+        "sqlquery": "fixed",
+        "sql": "SELECT * FROM sensors_details;",
+        "name": "",
+        "x": 400,
+        "y": 380,
+        "wires": [
+            [
+                "b67d57277ca36ea5"
+            ]
+        ]
+    },
+    {
+        "id": "070735782dd4d6fa",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "broker.emqx.io",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "c472cba5b97934b6",
+        "type": "sqlitedb",
+        "db": "\\Users\\vanes\\aiot01.db ",
+        "mode": "RWC"
+    },
+    {
+        "id": "c51626b0005ee69e",
+        "type": "ui_group",
+        "name": "Valores Sensor",
+        "tab": "4366361fcd591067",
+        "order": 1,
+        "disp": true,
+        "width": 17,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "4366361fcd591067",
+        "type": "ui_tab",
+        "name": "Nuevpo prueba sensor",
+        "icon": "dashboard",
+        "order": 4,
+        "disabled": false,
+        "hidden": false
+    }
+]
