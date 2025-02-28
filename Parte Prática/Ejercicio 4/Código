@@ -1,1 +1,23 @@
+import machine
+import time
+
+# Configuración de pines
+LED_AMARILLO = machine.Pin(17, machine.Pin.OUT)
+LED_ROJO = machine.Pin(16, machine.Pin.OUT)
+BOTON = machine.Pin(15, machine.Pin.IN, machine.Pin.PULL_DOWN)
+
+def encender_leds(pin):
+    LED_AMARILLO.value(1)
+    LED_ROJO.value(1)
+    time.sleep(2)  # Mantiene los LEDs encendidos por 2 segundos
+    LED_AMARILLO.value(0)
+    LED_ROJO.value(0)
+
+# Configurar interrupción para detectar el botón
+BOTON.irq(trigger=machine.Pin.IRQ_RISING, handler=encender_leds)
+
+# Bucle principal (mantener el programa corriendo)
+while True:
+    time.sleep(0.1)
+
 
